@@ -86,7 +86,7 @@ function selectorSet(multiple, ri, ci, indexesUpdated = true, moving = false) {
 // direction: left | right | up | down | row-first | row-last | col-first | col-last
 function selectorMove(multiple, direction) {
   const {
-    selector, data,
+    selector, data
   } = this;
   const { rows, cols } = data;
   let [ri, ci] = selector.indexes;
@@ -575,11 +575,10 @@ function sheetInitEvents() {
       overlayerMousemove.call(this, evt);
     })
     .on('mousedown', (evt) => {
-      editor.clear();
-      contextMenu.hide();
       // the left mouse button: mousedown → mouseup → click
       // the right mouse button: mousedown → contenxtmenu → mouseup
       if (evt.buttons === 2) {
+        contextMenu.hide();
         if (this.data.xyInSelectedRect(evt.offsetX, evt.offsetY)) {
           contextMenu.setPosition(evt.offsetX, evt.offsetY);
         } else {
@@ -601,11 +600,6 @@ function sheetInitEvents() {
       if (offsetY <= 0) colResizer.hide();
       if (offsetX <= 0) rowResizer.hide();
     });
-
-  selector.inputChange = (v) => {
-    dataSetCellText.call(this, v, 'input');
-    editorSet.call(this);
-  };
 
   // slide on mobile
   bindTouch(overlayerEl.el, {
