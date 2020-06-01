@@ -575,10 +575,18 @@ function sheetInitEvents() {
       overlayerMousemove.call(this, evt);
     })
     .on('mousedown', (evt) => {
+      if (evt.buttons === 1 && evt.detail <= 1 && editor.formulaCellSelecting()) {
+        const { offsetX, offsetY } = evt;
+        const { ri, ci } = this.data.getCellRectByXY(offsetX, offsetY);
+        editor.formulaSelectCell(ri, ci);
+        return;
+      }
+
+      editor.clear();
+      contextMenu.hide();
       // the left mouse button: mousedown → mouseup → click
       // the right mouse button: mousedown → contenxtmenu → mouseup
       if (evt.buttons === 2) {
-        contextMenu.hide();
         if (this.data.xyInSelectedRect(evt.offsetX, evt.offsetY)) {
           contextMenu.setPosition(evt.offsetX, evt.offsetY);
         } else {
@@ -852,7 +860,7 @@ export default class Sheet {
     this.editor = new Editor(
       formulas,
       () => this.getTableOffset(),
-      data.rows.height,
+      data,
     );
     // data validation
     this.modalValidation = new ModalValidation();
@@ -908,6 +916,7 @@ export default class Sheet {
     this.data = data;
     verticalScrollbarSet.call(this);
     horizontalScrollbarSet.call(this);
+    this.editor.resetData(data);
     this.toolbar.resetData(data);
     this.print.resetData(data);
     this.selector.resetData(data);

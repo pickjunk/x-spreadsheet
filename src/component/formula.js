@@ -1,10 +1,24 @@
-import { stringAt } from '../core/alphabet';
+import { stringAt, expr2xy, xy2expr } from '../core/alphabet';
 import { setCaretPosition, getCaretPosition } from '../core/caret';
+
+function renderCell(left, top, width, height, color, selected = false) {
+  let style = `position:absolute;box-sizing: border-box;`;
+  style += `left:${left}px;`;
+  style += `top:${top}px;`;
+  style += `width:${width}px;`;
+  style += `height:${height}px;`;
+  style += `border:${color} 2px dashed;`;
+  if (selected) {
+    style += `background:rgba(101, 101, 101, 0.1);`;
+  }
+  return `<div style="${style}"></div>`;
+}
 
 export default class Formula {
   constructor(editor) {
     this.editor = editor;
     this.el = this.editor.textEl.el;
+    this.cellEl = this.editor.cellEl.el;
 
     this.cells = [];
     this.cell = null;
@@ -15,16 +29,43 @@ export default class Formula {
       const index = getCaretPosition(this.el);
 
       this.cell = null;
-      for (let { from, to } of this.cells) {
+      for (let cell of this.cells) {
+        const { from, to } = cell;
         if (from <= index && index <= to) {
-          this.cell = {
-            from,
-            to,
-          };
-          // console.log('formula cell', this.cell);
-          return;
+          this.cell = cell;
+          break;
         }
       }
+
+      this.renderCells();
+    });
+
+    this.el.addEventListener("keydown", (e) => {
+      const keyCode = e.keyCode || e.which;
+      if ([37, 38, 39, 40].indexOf(keyCode) == -1) return;
+
+      if (!this.cell) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const text = this.editor.inputText;
+      let expr = text.slice(this.cell.from, this.cell.to);
+      let [ci, ri] = expr2xy(expr);
+
+      if (keyCode == 37 && ci >= 1) {
+        ci -= 1;
+      } else if (keyCode == 38 && ri >= 1) {
+        ri -= 1;
+      }
+      else if (keyCode == 39) {
+        ci += 1;
+      }
+      else if (keyCode == 40) {
+        ri += 1;
+      }
+
+      this.selectCell(ri, ci);
     });
   }
 
@@ -33,12 +74,12 @@ export default class Formula {
       const row = String(ri + 1);
       const col = stringAt(ci);
       const text = this.editor.inputText;
-      const cell = this.cell;
+      const { from, to } = this.cell;
 
-      this.editor.inputText = text.slice(0, cell.from) + col + row + text.slice(cell.to);
+      this.editor.inputText = text.slice(0, from) + col + row + text.slice(to);
       this.editor.render();
       setTimeout(() => {
-        setCaretPosition(this.el, cell.from + col.length + row.length);
+        setCaretPosition(this.el, from + col.length + row.length);
       });
 
       this.cell = null;
@@ -69,6 +110,7 @@ export default class Formula {
         // cell
         const color = pickColor();
         html += `<span class="formula-token" style="color:${color}">${m[0]}</span>`;
+
         this.cells.push({
           from: i,
           to: i + m[0].length,
@@ -143,5 +185,24 @@ export default class Formula {
     // console.log('formula cells', this.cells);
 
     this.el.innerHTML = html;
+  }
+
+  renderCells() {
+    const text = this.editor.inputText;
+    const cells = this.cells;
+    let cellHtml = "";
+
+    for (let cell of cells) {
+      const { from, to, color } = cell;
+      if (color) {
+        const [ci, ri] = expr2xy(text.slice(from, to));
+        const {
+          left, top, width, height
+        } = this.editor.data.cellRect(ri, ci);
+        cellHtml += renderCell(left, top, width, height, color, this.cell === cell);
+      }
+    }
+
+    this.cellEl.innerHTML = cellHtml;
   }
 }

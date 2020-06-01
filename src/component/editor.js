@@ -96,9 +96,10 @@ function dateFormat(d) {
 }
 
 export default class Editor {
-  constructor(formulas, viewFn, rowHeight) {
+  constructor(formulas, viewFn, data) {
+    this.data = data;
     this.viewFn = viewFn;
-    this.rowHeight = rowHeight;
+    this.rowHeight = data.rows.height;
     this.formulas = formulas;
     this.suggest = new Suggest(formulas, (it) => {
       suggestItemClick.call(this, it);
@@ -126,7 +127,10 @@ export default class Editor {
       .on('mousemove.stop', () => { })
       .on('mousedown.stop', () => { });
     this.el = h('div', `${cssPrefix}-editor`)
-      .child(this.areaEl).hide();
+      .children(
+        this.areaEl,
+        this.cellEl = h('div', `${cssPrefix}-formula-cell`)
+      ).hide();
     this.suggest.bindInputEvents(this.textEl);
 
     this.areaOffset = null;
@@ -156,8 +160,14 @@ export default class Editor {
     this.el.hide();
     this.textEl.val('');
     this.textlineEl.html('');
+    this.cellEl.html('');
     resetSuggestItems.call(this);
     this.datepicker.hide();
+  }
+
+  resetData(data) {
+    this.data = data;
+    this.rowHeight = data.rows.height;
   }
 
   setOffset(offset, suggestPosition = 'top') {

@@ -33,7 +33,6 @@ export function setCaretPosition(context, index) {
   selection.removeAllRanges();
   const range = new Range();
   range.setStart(pos.node, pos.position);
-  selection.removeAllRanges();
   selection.addRange(range);
 }
 
