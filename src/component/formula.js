@@ -53,16 +53,35 @@ export default class Formula {
       let expr = text.slice(this.cell.from, this.cell.to);
       let [ci, ri] = expr2xy(expr);
 
+      const { merges } = this.editor.data;
+      let mergeCell = merges.getFirstIncludes(ri, ci);
+      if (mergeCell) {
+        ri = mergeCell.sri;
+        ci = mergeCell.sci;
+      }
+
       if (keyCode == 37 && ci >= 1) {
         ci -= 1;
       } else if (keyCode == 38 && ri >= 1) {
         ri -= 1;
       }
       else if (keyCode == 39) {
+        if (mergeCell) {
+          ci = mergeCell.eci;
+        }
         ci += 1;
       }
       else if (keyCode == 40) {
+        if (mergeCell) {
+          ri = mergeCell.eri;
+        }
         ri += 1;
+      }
+
+      mergeCell = merges.getFirstIncludes(ri, ci);
+      if (mergeCell) {
+        ri = mergeCell.sri;
+        ci = mergeCell.sci;
       }
 
       this.selectCell(ri, ci);
